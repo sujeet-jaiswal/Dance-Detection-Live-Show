@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dance Detection Live Show</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #1e3c72, #2a5298);
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-top: 20px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+
+        button {
+            background: #ff5722;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #e64a19;
+        }
+
+        #canvas {
+            border: 5px solid #ffffff;
+            margin: 20px auto;
+            display: block;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #label-container {
+            font-size: 1.1rem;
+            margin: 20px auto;
+            text-align: center;
+            width: 80%;
+        }
+
+        .label {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px auto;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        .label span {
+            flex: 1;
+        }
+
+        .analytics {
+            font-size: 1.5rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dance Detection Live Show</h1>
+    <p>Experience AI-Powered Real-Time Dance Analysis!</p>
+    <button type="button" onclick="init()">Start Live Show</button>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <div id="label-container"></div>
+    <div class="analytics" id="analytics-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+    <script>
+        const MODEL_URL = "https://teachablemachine.withgoogle.com/models/Tmziz77lT/";
+
+        let model, webcam, ctx, labelContainer, analyticsContainer, maxPredictions;
+
+        async function init() {
+            const modelURL = MODEL_URL + "model.json";
+            const metadataURL = MODEL_URL + "metadata.json";
+
+            // Load the model
+            model = await tmPose.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            // Setup webcam
+            const flip = true;
+            webcam = new tmPose.Webcam(400, 400, flip);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+
+            // Initialize canvas and label container
+            const canvas = document.getElementById("canvas");
+            ctx = canvas.getContext("2d");
+            labelContainer = document.getElementById("label-container");
+            analyticsContainer = document.getElementById("analytics-container");
+
+            labelContainer.innerHTML = "";
+            for (let i = 0; i < maxPredictions; i++) {
+                const labelDiv = document.createElement("div");
+                labelDiv.classList.add("label");
+                labelDiv.innerHTML = `<span class='class-name'></span><span class='class-prob'></span>`;
+                labelContainer.appendChild(labelDiv);
+            }
+
+            analyticsContainer.innerHTML = "<b>Real-Time Dance Analytics</b>";
+        }
+
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+            const prediction = await model.predict(posenetOutput);
+
+            let detectedStyle = "None";
+            let highestProbability = 0;
+
+            prediction.forEach((p, i) => {
+                const className = p.className;
+                const probability = (p.probability * 100).toFixed(2);
+
+                if (p.probability > highestProbability) {
+                    highestProbability = p.probability;
+                    detectedStyle = className;
+                }
+
+                const labelDiv = labelContainer.children[i];
+                labelDiv.querySelector(".class-name").textContent = className;
+                labelDiv.querySelector(".class-prob").textContent = `${probability}%`;
+            });
+
+            analyticsContainer.innerHTML = `
+                <b>Detected Dance Style:</b> ${detectedStyle}<br>
+                <b>Confidence Level:</b> ${(highestProbability * 100).toFixed(2)}%
+            `;
+
+            drawPose(pose);
+        }
+
+        function drawPose(pose) {
+            if (webcam.canvas) {
+                ctx.drawImage(webcam.canvas, 0, 0);
+                if (pose) {
+                    const minPartConfidence = 0.5;
+                    tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
+                    tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
