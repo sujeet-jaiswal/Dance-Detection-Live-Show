@@ -79,7 +79,7 @@ We welcome contributions from the community! Here's how you can contribute:
 5. Open a pull request.
 
 ## **License**
-This project is licensed under the [MIT License](LICENSE). Feel free to use, modify, and distribute this project as per the terms of the license.
+This project is free Feel free to use, modify, and distribute this project as per the terms of the license.
 
 ## **Acknowledgments**
 - [Teachable Machine](https://teachablemachine.withgoogle.com/) for providing the pose estimation model.
@@ -88,5 +88,5 @@ This project is licensed under the [MIT License](LICENSE). Feel free to use, mod
 
 ## **Contact**
 For any queries or suggestions, feel free to reach out:
-- **Email:** your-email@example.com
-- **GitHub:** [your-username](https://github.com/your-username)
+- **Email:** sjtkumar978@gmail.com
+- **GitHub:**(https://github.com/sujeet-jaiswal/)
